@@ -13,10 +13,16 @@ const CHANNEL_IDS = (process.env.CHANNEL_ID || "")
   .filter(Boolean);
 
 // ปรับตรงนี้ได้ตามต้องการ (ค่าเริ่มต้น 100 = ปกติ, ถ้ากลัวข้อความค้างเยอะปรับเป็น 200-300 ได้)
-// หมายเหตุ: ค่านี้คือ "ต่อ 1 channel" ไม่ใช่รวม
+// หมายเหตุ: ค่านี้คือ "ต่อ 1 channel" ไม่ใช่รวม (ใช้เฉพาะตอน FULL_SYNC=false)
 const MAX_MESSAGES = process.env.MAX_MESSAGES
   ? parseInt(process.env.MAX_MESSAGES, 10)
   : 100;
+
+// FULL_SYNC=true -> ดึงย้อนไปจนถึงข้อความแรกสุดของ channel (ไม่จำกัดจำนวน)
+// ใช้ตอน backfill ประวัติเก่าครั้งเดียว ไม่ควรตั้งค่านี้ไว้ใน cron ที่รันทุกนาที
+const FULL_SYNC = String(process.env.FULL_SYNC || "").toLowerCase() === "true";
+
+const EFFECTIVE_MAX_MESSAGES = FULL_SYNC ? Infinity : MAX_MESSAGES;
 
 /**
  * Discord API - รองรับ pagination ดึงได้เกิน 100 ข้อความ
@@ -112,7 +118,9 @@ async function main() {
   console.log("Discord Duty Sync");
   console.log("==============================");
   console.log(`Channels: ${CHANNEL_IDS.join(", ") || "(none configured)"}`);
-  console.log(`Max messages per channel: ${MAX_MESSAGES}`);
+  console.log(FULL_SYNC
+    ? "Mode: FULL SYNC (ดึงย้อนไปจนถึงข้อความแรกสุด — อาจใช้เวลานาน)"
+    : `Mode: Incremental (สูงสุด ${MAX_MESSAGES} ข้อความ/channel)`);
 
   if (CHANNEL_IDS.length === 0) {
     console.log("ไม่มี CHANNEL_ID ที่ตั้งค่าไว้ ข้ามการทำงาน");
@@ -123,7 +131,7 @@ async function main() {
 
   for (const channelId of CHANNEL_IDS) {
     console.log(`ดึงข้อความจาก channel: ${channelId}`);
-    const messages = await getDiscordMessages(channelId, MAX_MESSAGES);
+    const messages = await getDiscordMessages(channelId, EFFECTIVE_MAX_MESSAGES);
     console.log(`  ได้รับ ${messages.length} messages`);
     allMessages = allMessages.concat(messages);
 
