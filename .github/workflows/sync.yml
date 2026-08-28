@@ -9,9 +9,13 @@ on:
         required: false
         default: "100"
       full_sync:
-        description: "ดึงย้อนไปจนถึงข้อความแรกสุดของทุก channel (true/false) — ใช้ตอน backfill ครั้งแรกเท่านั้น"
+        description: "ดึงย้อนไปจนถึงข้อความแรกสุดของ channel (true/false) — ใช้ตอน backfill ครั้งแรกเท่านั้น"
         required: false
         default: "false"
+      channel_id:
+        description: "ระบุ Channel ID เดียวเพื่อดึงเฉพาะห้องนี้ (เว้นว่าง = ใช้ทุก channel จาก secret CHANNEL_ID ตามปกติ)"
+        required: false
+        default: ""
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -22,7 +26,7 @@ jobs:
         run: node discord-sync.js
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          CHANNEL_ID: ${{ github.event.inputs.channel_id || secrets.CHANNEL_ID }}
           GAS_URL: ${{ secrets.GAS_URL }}
           GAS_SECRET: ${{ secrets.GAS_SECRET }}
           MAX_MESSAGES: ${{ github.event.inputs.max_messages || '100' }}
