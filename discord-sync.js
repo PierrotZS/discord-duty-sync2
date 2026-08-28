@@ -12,11 +12,11 @@ const CHANNEL_IDS = (process.env.CHANNEL_ID || "")
   .map(id => id.trim())
   .filter(Boolean);
 
-// ปรับตรงนี้ได้ตามต้องการ (ค่าเริ่มต้น 100 = ปกติ, ถ้ากลัวข้อความค้างเยอะปรับเป็น 200-300 ได้)
+// ปรับตรงนี้ได้ตามต้องการ (ค่าเริ่มต้น 20 ตามที่ตั้งไว้, ถ้ากลัวข้อความค้างเยอะปรับเพิ่มได้)
 // หมายเหตุ: ค่านี้คือ "ต่อ 1 channel" ไม่ใช่รวม (ใช้เฉพาะตอน FULL_SYNC=false)
 const MAX_MESSAGES = process.env.MAX_MESSAGES
   ? parseInt(process.env.MAX_MESSAGES, 10)
-  : 100;
+  : 20;
 
 // FULL_SYNC=true -> ดึงย้อนไปจนถึงข้อความแรกสุดของ channel (ไม่จำกัดจำนวน)
 // ใช้ตอน backfill ประวัติเก่าครั้งเดียว ไม่ควรตั้งค่านี้ไว้ใน cron ที่รันทุกนาที
