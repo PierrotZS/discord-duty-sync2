@@ -1,13 +1,13 @@
 name: Discord Duty Sync
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/1 * * * *"
   workflow_dispatch:
     inputs:
       max_messages:
-        description: "จำนวนข้อความสูงสุดที่จะดึงต่อ channel (เว้นว่างได้ ใช้ default 100, ไม่มีผลถ้า full_sync = true)"
+        description: "จำนวนข้อความสูงสุดที่จะดึงต่อ channel (default 20, ไม่มีผลถ้า full_sync = true)"
         required: false
-        default: "100"
+        default: "20"
       full_sync:
         description: "ดึงย้อนไปจนถึงข้อความแรกสุดของ channel (true/false) — ใช้ตอน backfill ครั้งแรกเท่านั้น"
         required: false
@@ -16,6 +16,13 @@ on:
         description: "ระบุ Channel ID เดียวเพื่อดึงเฉพาะห้องนี้ (เว้นว่าง = ใช้ทุก channel จาก secret CHANNEL_ID ตามปกติ)"
         required: false
         default: ""
+
+# กัน job รันซ้อนกัน ถ้า trigger ถี่กว่า run ก่อนหน้าจะทำงานเสร็จ
+# run ใหม่จะรอในคิวแทนที่จะรันขนานกัน (ลด load บน Discord API / GAS โดยไม่จำเป็น)
+concurrency:
+  group: discord-duty-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -29,5 +36,5 @@ jobs:
           CHANNEL_ID: ${{ github.event.inputs.channel_id || secrets.CHANNEL_ID }}
           GAS_URL: ${{ secrets.GAS_URL }}
           GAS_SECRET: ${{ secrets.GAS_SECRET }}
-          MAX_MESSAGES: ${{ github.event.inputs.max_messages || '100' }}
+          MAX_MESSAGES: ${{ github.event.inputs.max_messages || '20' }}
           FULL_SYNC: ${{ github.event.inputs.full_sync || 'false' }}
